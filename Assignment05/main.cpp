@@ -73,8 +73,15 @@ struct sRecord {
     char charge_code;
 };
 
-int main() {
+//Prototypes
+void printMenu();
 
+int main() {
+    //restore files from back up
+    system("copy assignv2.ind.bak assignv2.ind");
+    system("copy assignv2.rnd.bak assignv2.rnd");
+    //end restore
+    
     system("PAUSE>NUL");
     return 0;
 }
