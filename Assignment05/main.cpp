@@ -57,6 +57,22 @@
 
 using namespace std;
 
+//Structures
+struct sDate {
+    int year;
+    int month;
+    int day;
+};
+struct sRecord {
+    int film_id;
+    char subject[28];
+    sDate date;
+    char state[3];
+    char county[12];
+    double length;
+    char charge_code;
+};
+
 int main() {
 
     system("PAUSE>NUL");
