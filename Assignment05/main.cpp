@@ -87,6 +87,18 @@ int main() {
     return 0;
 }
 
+void printMenu() {
+    system("cls");
+    printf("\n");
+    printf("Please select from one of the following menu choices:\n");
+    printf("\n");
+    printf("\t[1] List the File\n");
+    printf("\t[2] Search the File\n");
+    printf("\t[3] Add a record\n");
+    printf("\t[4] Delete a record\n");
+    printf("\t[5] Exit the program\n");
+    printf("\n");
+}
 int getInt(char howToAsk[101]) {
 	char buffer[40];
 	printf("%s", howToAsk);
