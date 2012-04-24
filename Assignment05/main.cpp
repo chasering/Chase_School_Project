@@ -75,6 +75,7 @@ struct sRecord {
 
 //Prototypes
 void printMenu();
+int getInt(char *howToAsk);
 
 int main() {
     //restore files from back up
@@ -84,4 +85,11 @@ int main() {
     
     system("PAUSE>NUL");
     return 0;
+}
+
+int getInt(char howToAsk[101]) {
+	char buffer[40];
+	printf("%s", howToAsk);
+	gets(buffer);
+	return atoi(buffer);
 }
