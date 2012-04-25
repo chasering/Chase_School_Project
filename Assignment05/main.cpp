@@ -51,7 +51,7 @@
 //  simply by recopying your .rnd file.
 
 #include <stdlib.h>	//needed for ato(i,f,etc)
-#include <stdio.h>	//needed for printf
+#include <stdio.h>	//needed for printf, fread
 #include <iostream>
 #include <cstdio>
 
@@ -72,24 +72,54 @@ struct sRecord {
     double length;
     char charge_code;
 };
+struct indT {
+    int id, pos;
+};
+
 
 //Prototypes
 void printMenu();
 int getInt(char *howToAsk);
 
 int main() {
-    //restore files from back up
-    system("copy assignv2.ind.bak assignv2.ind");
-    system("copy assignv2.rnd.bak assignv2.rnd");
-    //end restore
+    //* This line for file restoration --> */ system("copy assignv2.ind.bak assignv2.ind"); system("copy assignv2.rnd.bak assignv2.rnd"); system("cls");
     
+    //variables
+    indT ind[50];   //create index
+    char buff[40];  //create buffer
+    int fromFile;
+    FILE *fp;   //create file pointer fp
+
+    //actual work
+    if(!(fp = fopen("assignv2.ind", "rb"))) {
+        printf("For some reason, we couldn't open the file for output. Better check with HAL..\n");
+    }
+    
+    for(int x = 0; x < 50; x++) {
+        fread(&fromFile, sizeof(int), 1, fp);
+        if(!(feof(fp))) {
+            ind[x].id = fromFile;
+            fread(&fromFile, sizeof(int), 1, fp);
+            ind[x].pos = fromFile;
+        } else {
+            for(int y = x; y < 50; y++) {
+                ind[y].id = 99999;
+                ind[y].pos = 99999;
+            }
+            x = 50;
+            fclose(fp); //fp->assignv2.ind
+        }
+    }
+
+
+
     system("PAUSE>NUL");
     return 0;
 }
 
 int getInt(char howToAsk[101]) {
-	char buffer[40];
-	printf("%s", howToAsk);
-	gets(buffer);
-	return atoi(buffer);
+    char buffer[40];
+    printf("%s", howToAsk);
+    gets(buffer);
+    return atoi(buffer);
 }
