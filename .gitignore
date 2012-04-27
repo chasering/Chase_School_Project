@@ -3,4 +3,5 @@ Assignment05/Debug/*
 Debug/*
 ipch/*
 Assignment05.suo
-Assignment05.sdf
+Assignment05.sdfi
+*.sln.docstate.suo
