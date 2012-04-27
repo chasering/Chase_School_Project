@@ -5,3 +5,5 @@ ipch/*
 Assignment05.suo
 Assignment05.sdfi
 *.sln.docstates.suo
+Assignment*.sdf
+backup.zip
