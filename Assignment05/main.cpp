@@ -81,7 +81,7 @@ void loadIndex(indT ind[]);
 void printMenu(char message[30]);
 void listTable(indT *ind);
 void search(indT *ind, int id, char *message);
-void add(indT *ind);
+void add(indT ind[]);
 void deleteRec();
 
 int get_film_id(char *howToAsk);                    
@@ -118,7 +118,7 @@ int main() {
         case 1:
             //List table option selected
             system("CLS");
-            listTable(ind);
+            listTable(indP);
             strcpy(message, "Table printed.");
             break;
         case 2:
@@ -191,7 +191,7 @@ void printMenu(char message[30]) {
     printf("%s\n", message);
     printf("Please enter the number for the selections above: ");
 }
-void listTable(indT ind[]) {
+void listTable(indT *ind) {
     sRecord record;
     int intBuff;
     FILE *fp;
@@ -257,7 +257,7 @@ void search(indT *indP, int id, char *message) {
 void add(indT ind[]) {
     //record *rp, int recordCount
     FILE * fp;
-    if((fp = fopen("assignv2.rnd", "rb")) == NULL) {
+    if((fp = fopen("assignv2.rnd", "r+b")) == NULL) {
         printf("Couldn't open file.");
     } else {
         sRecord record;
@@ -272,11 +272,13 @@ void add(indT ind[]) {
         
         // Find first 99999 space in index
         int x; for(x = 0; ind[x].id != 99999; x++) {/* nothing to see here */}
-        
-        fseek(fp, 0, SEEK_END);
-        fwrite(&record, sizeof(sRecord), 1, fp);
+
         ind[x].id = record.film_id;
         ind[x].pos = x;
+
+        fseek(fp, 0, SEEK_END);
+        fwrite(&record, sizeof(sRecord), 1, fp);
+
         fclose(fp);
     }
 }
