@@ -77,7 +77,7 @@ struct indT {
 };
 
 //Prototypes
-void loadIndex(indT *ind);
+void loadIndex(indT ind[]);
 void printMenu(char message[30]);
 void listTable(indT *ind);
 void search(indT *ind, int id, char *message);
@@ -95,6 +95,7 @@ void get_charge_code(char &dest, char *howToAsk);
 //Supporting Functions
 bool is_int(char from);                             
 bool is_double(char *num);                          
+void list_all();
 
 //gettersville
 int getInt(char []);
@@ -136,6 +137,9 @@ int main() {
 
             strcpy(message, "Record Deleted.");
             break;
+        case 99: //list everything in file (hidden option)
+            list_all();
+            break;
         default:
             strcpy(message, "Invalid option selected, try again.");
             break;
@@ -151,7 +155,7 @@ int main() {
 }
 
 //Functions
-void loadIndex(indT *ind) {
+void loadIndex(indT ind[]) {
     //vars
     FILE *fp;
     int intBuff;
@@ -162,7 +166,6 @@ void loadIndex(indT *ind) {
     for(int x = 0; x < 50; x++) {
         fread(&intBuff, sizeof(int), 1, fp);
         if(!(feof(fp))) {
-            ind[x].id = 2;
             ind[x].id = intBuff;
             fread(&intBuff, sizeof(int), 1, fp);
             ind[x].pos = intBuff;
@@ -188,7 +191,7 @@ void printMenu(char message[30]) {
     printf("%s\n", message);
     printf("Please enter the number for the selections above: ");
 }
-void listTable(indT *ind) {
+void listTable(indT ind[]) {
     sRecord record;
     int intBuff;
     FILE *fp;
@@ -200,7 +203,7 @@ void listTable(indT *ind) {
     for(int x = 0; ind[x].pos != 99999; x++) {
         fseek(fp, ind[x].pos * sizeof(sRecord), SEEK_SET);
         fread(&record, sizeof(record), 1, fp);
-        printf("%6i|%-26s|%2i/%2i/%2i|%-5s|%-10s|%-6f|%c\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);//printf("%i\n", record.film_id);
+        printf("%6i|%-26s|%2i/%2i/%2i|%-5s|%-10s|%-6f|%c\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);
         printf("------+--------------------------+--------+-----+----------+--------+---------\n");
     }
     fclose(fp); //fp->assignv2.ind
@@ -251,10 +254,10 @@ void search(indT *indP, int id, char *message) {
     }
     system("PAUSE");
 }
-void add(indT *indP) {
+void add(indT ind[]) {
     //record *rp, int recordCount
     FILE * fp;
-    if((fp = fopen("assignv2.rnd", "wb")) == NULL) {
+    if((fp = fopen("assignv2.rnd", "rb")) == NULL) {
         printf("Couldn't open file.");
     } else {
         sRecord record;
@@ -265,8 +268,15 @@ void add(indT *indP) {
         get_county(record.county, "Please enter the county: ");
         get_length(record.length, "Please enter the length: ");
         get_charge_code(record.charge_code, "Please enter the charge code: ");
-
         // The record is complete. Now add code to add it.
+        
+        // Find first 99999 space in index
+        int x; for(x = 0; ind[x].id != 99999; x++) {/* nothing to see here */}
+        
+        fseek(fp, 0, SEEK_END);
+        fwrite(&record, sizeof(sRecord), 1, fp);
+        ind[x].id = record.film_id;
+        ind[x].pos = x;
         fclose(fp);
     }
 }
@@ -288,7 +298,7 @@ int get_film_id(char *howToAsk) {
 
         printf("%s", howToAsk);
         gets(buff);
-        
+
         if (!strcmp(buff, "")) {
             printf("Sorry, but <RETURN> is not a number.\n");
         }
@@ -552,4 +562,28 @@ void getString(char howToAsk[101], char *dest) {
     printf("%s", howToAsk);
     gets(buffer);
     strcpy(dest, buffer);
+}
+void list_all() {
+    FILE *sec;
+    int tmp = 0;
+    sRecord stuff;
+    int x, y;
+
+    if(!(sec = fopen("assignv2.rnd", "rb"))) {
+        printf("For some reason, we couldn't open the file for output. Better check with HAL..\n");
+    }
+    printf("%6s|%-26s|%-8s|%-5s|%-10s|%-8s|%-s\n", "FilmID", "Subject", "Date",
+        "State", "County", "Length", "FILE POS");
+    for(x = 0, y = 0; x < 10000; x++) {
+        fseek(sec, x * sizeof(sRecord), SEEK_SET);
+        fread(&stuff, sizeof(sRecord), 1, sec);
+        if(stuff.film_id != tmp) {
+            tmp = stuff.film_id;
+            printf("%6i|%-26s|%2i/%2i/%2i|%-5s|%-10s|%-6f|%i\n", stuff.film_id, stuff.subject, stuff.date.month, stuff.date.day, stuff.date.year, stuff.state, stuff.county, stuff.length, x);
+            y++;
+        }
+    }
+    printf("%i entries found..\n", y);
+    system("PAUSE>NUL");
+    fclose(sec);
 }
