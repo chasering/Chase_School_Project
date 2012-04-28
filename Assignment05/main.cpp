@@ -80,9 +80,10 @@ struct indT {
 void loadIndex(indT ind[]);
 void printMenu(char message[30]);
 void listTable(indT *ind);
-void search(indT *ind, int id, char *message);
+int search(indT *ind, int id, bool ver, char *message);
 void add(indT ind[]);
-void deleteRec();
+void deleteRec(indT ind[], char *message);
+void sort(indT ind[]);
 
 int get_film_id(char *howToAsk);                    
 void get_subject(char *dest, char *howToAsk);    
@@ -125,17 +126,19 @@ int main() {
             //Search table option selected
             search(indP
                 , getInt("Please enter a film ID to search for: ")
+                , true
                 , message);
             break;
         case 3:
             //Add a Record option selected
             add(ind);
+            sort(ind);/////////////////////////////////////////////////////////
             strcpy(message, "Record Added.");
             break;
         case 4:
             //Delete Record Selected
-
-            strcpy(message, "Record Deleted.");
+            deleteRec(ind, message);
+            sort(ind);/////////////////////////////////////////////////////////
             break;
         case 99: //list everything in file (hidden option)
             list_all();
@@ -198,19 +201,19 @@ void listTable(indT *ind) {
     if(!(fp = fopen("assignv2.rnd", "rb"))) {
         printf("For some reason, we couldn't open the file for output. Better check with HAL..\n");
     }
-    printf("%6s|%-26s|%-8s|%-5s|%-10s|%-8s|%-s\n", "FilmID", "Subject", "Date",
-        "State", "County", "Length", "Charge Code");
-    for(int x = 0; ind[x].pos != 99999; x++) {
+    printf("%6s|%-26s|%-10s|%-5s|%-10s|%-8s|%-s\n", "FilmID", "Subject", "Date",
+        "State", "County", "Length", "Chg.Code");
+    for(int x = 0; ind[x].id != 99999; x++) {
         fseek(fp, ind[x].pos * sizeof(sRecord), SEEK_SET);
         fread(&record, sizeof(record), 1, fp);
-        printf("%6i|%-26s|%2i/%2i/%2i|%-5s|%-10s|%-6f|%c\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);
-        printf("------+--------------------------+--------+-----+----------+--------+---------\n");
+        printf("%6i|%-26s|%2i/%2i/%4i|%-5s|%-10s|%-6f|%c\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);
+        printf("------+--------------------------+----------+-----+----------+--------+--------\n");
     }
     fclose(fp); //fp->assignv2.ind
     printf("\n");
     system("PAUSE");
 }
-void search(indT *indP, int id, char *message) {
+int search(indT *indP, int id, bool ver, char *message) {
     int x;
     for(x = 0; indP[x].id != 99999; x++) {}
 
@@ -233,26 +236,28 @@ void search(indT *indP, int id, char *message) {
         }
     }
     if (spot >= 0) {
-        strcpy(message, "Previous search record was found.");
         system("CLS");
-        sRecord record;
-        FILE *fp;
-        if(!(fp = fopen("assignv2.rnd", "rb"))) {
-            printf("For some reason, we couldn't open the file for output. Better check with HAL..\n");
-        } else {
-            fseek(fp, indP[spot].pos * sizeof(sRecord), SEEK_SET);
-            fread(&record, sizeof(record), 1, fp);
-            fclose(fp);
-        }
+        strcpy(message, "Previous search record was found.");
+        if(ver) {
+            sRecord record;
+            FILE *fp;
+            if(!(fp = fopen("assignv2.rnd", "rb"))) {
+                printf("For some reason, we couldn't open the file for output. Better check with HAL..\n");
+            } else {
+                fseek(fp, indP[spot].pos * sizeof(sRecord), SEEK_SET);
+                fread(&record, sizeof(record), 1, fp);
+                fclose(fp);
+            }
 
-        printf("\n%6s|%-26s|%-8s|%-5s|%-10s|%-8s|%-s\n", "FilmID", "Subject", "Date", "State", "County", "Length", "Charge Code");
-        printf("------+--------------------------+--------+-----+----------+--------+---------\n");
-        printf("%6i|%-26s|%-2i/%-2i/%-2i|%-5s|%-10s|%-6f|%c\n\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);
-        system("PAUSE");
+            printf("\n%6s|%-26s|%-8s|%-5s|%-10s|%-8s|%-s\n", "FilmID", "Subject", "Date", "State", "County", "Length", "Charge Code");
+            printf("------+--------------------------+--------+-----+----------+--------+---------\n");
+            printf("%6i|%-26s|%-2i/%-2i/%-2i|%-5s|%-10s|%-6f|%c\n\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);
+            system("PAUSE");
+        }
     } else {
         strcpy(message, "RECORD NOT FOUND");
     }
-    system("PAUSE");
+    return spot;
 }
 void add(indT ind[]) {
     //record *rp, int recordCount
@@ -271,10 +276,18 @@ void add(indT ind[]) {
         // The record is complete. Now add code to add it.
         
         // Find first 99999 space in index
-        int x; for(x = 0; ind[x].id != 99999; x++) {/* nothing to see here */}
+        int next;
+        for(int x = 0; x < 50; x++) {
+            if(ind[x].pos == 99999) {
+                next = x;
+                x = 50;
+            }
+        }
+        //printf("%i\n", x);
+        //system("PAUSE");
 
-        ind[x].id = record.film_id;
-        ind[x].pos = x;
+        ind[next].id = record.film_id;
+        ind[next].pos = next;
 
         fseek(fp, 0, SEEK_END);
         fwrite(&record, sizeof(sRecord), 1, fp);
@@ -282,7 +295,66 @@ void add(indT ind[]) {
         fclose(fp);
     }
 }
-void deleteRec() {
+void deleteRec(indT ind[], char *message) {
+    char trashCan[50] = {'\0'};
+    int spot = search(ind, getInt("Please enter the film id that you would like to delete: "), false, message);
+    // If the record to delete is not found, message will be set to 
+    //  "RECORD NOT FOUND," and we won't have to worry bout it. But if it was
+    //  found, the next IF will change it to "Record Deleted!"
+
+    if(spot >= 0) {
+        //printf("%i\n", spot);
+        ind[spot].id = 99999;
+        //ind[spot].pos = 99999;
+        strcpy(message, "Record Deleted!");
+    }
+    /*system("PAUSE");*/
+}
+void sort(indT ind[]) {
+    int x, y, temp;
+    for(x = 0; x < 49; x++)
+    {
+        for(y = x + 1; y > 0; y--)
+        {
+            if(ind[y].id < ind[y - 1].id)
+            {
+                //Swaps the values
+                temp = ind[y].id;
+                ind[y].id = ind[y - 1].id;
+                ind[y - 1].id = temp;
+
+                temp = ind[y].pos;
+                ind[y].pos = ind[y - 1].pos;
+                ind[y - 1].pos = temp;
+
+            }
+            /*for(int o = 0; o < 11; o++) { printf("%i\t%i\n", ind[o].id, ind[o].pos); }
+            system("PAUSE");*/
+        }
+    }
+
+
+    //bool done = false;
+    //int x = 0, tmp = 0;
+    //int b, y;
+
+    //while(!done) {
+    //    done = true;
+    //    for(y = 0; y < 49; y++) {
+    //        if(ind[y].id > ind[y + 1].id) {
+    //            tmp = ind[y].id;
+    //            ind[y].id = ind[y + 1].id;
+    //            ind[y + 1].id = tmp;
+
+    //            tmp = ind[y].pos;
+    //            ind[y].pos = ind[y + 1].pos;
+    //            ind[y + 1].pos = tmp;
+
+    //            y = 49;
+    //            done = false;
+    //        }
+    //    }
+    //}
 }
 /*#####################################
 ##                                   ##
