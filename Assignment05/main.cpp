@@ -105,40 +105,39 @@ char getChar(char []);
 void getString(char [], char *);
 
 int main() {
-    /* This line for file restoration --> */ system("copy assignv2.ind.bak assignv2.ind"); system("copy assignv2.rnd.bak assignv2.rnd"); system("cls");
+    /* This line for file restoration --> */ system("copy assignv2.ind.bak assignv2.ind");
+    /* This line for file restoration --> */ system("copy assignv2.rnd.bak assignv2.rnd");
+    system("cls");
+
     //variables
     indT ind[50], *indP;        //create index
-    indP = ind;
-    loadIndex(ind);
-    char message[50] = {'\0'};       //for menu messages
+    indP = ind;                 //point, jic
+    loadIndex(ind);             //initial load
+    char message[50] = {'\0'};  //for menu messages
 
     printMenu(message);
-    int answer = getInt(""); //atoi(gets(buff));
+    int answer = getInt("");    //atoi(gets(buff));
     while(!(answer == 5)) {
         switch (answer) {
-        case 1:
-            //List table option selected
+        case 1: //List table option selected
             system("CLS");
             listTable(indP);
             strcpy(message, "Table printed.");
             break;
-        case 2:
-            //Search table option selected
+        case 2: //Search table option selected
             search(indP
                 , getInt("Please enter a film ID to search for: ")
                 , true
                 , message);
             break;
-        case 3:
-            //Add a Record option selected
+        case 3: //Add a Record option selected
             add(ind);
-            sort(ind);/////////////////////////////////////////////////////////
+            sort(ind);
             strcpy(message, "Record Added.");
             break;
-        case 4:
-            //Delete Record Selected
+        case 4: //Delete Record Selected
             deleteRec(ind, message);
-            sort(ind);/////////////////////////////////////////////////////////
+            sort(ind);
             break;
         case 99: //list everything in file (hidden option)
             list_all();
@@ -156,7 +155,6 @@ int main() {
     system("PAUSE>NUL");
     return 0;
 }
-
 //Functions
 void loadIndex(indT ind[]) {
     //vars
@@ -206,17 +204,19 @@ void listTable(indT *ind) {
     for(int x = 0; ind[x].id != 99999; x++) {
         fseek(fp, ind[x].pos * sizeof(sRecord), SEEK_SET);
         fread(&record, sizeof(record), 1, fp);
-        printf("%6i|%-26s|%2i/%2i/%4i|%-5s|%-10s|%-6f|%c\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);
         printf("------+--------------------------+----------+-----+----------+--------+--------\n");
+        printf("%6i|%-26s|%2i/%2i/%4i|%-5s|%-10s|%-6f|%c\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);
     }
+    printf("------+--------------------------+----------+-----+----------+--------+--------\n");
     fclose(fp); //fp->assignv2.ind
     printf("\n");
     system("PAUSE");
 }
 int search(indT *indP, int id, bool ver, char *message) {
+    //vars
     int x;
     for(x = 0; indP[x].id != 99999; x++) {}
-
+    //work
     bool found = false;
     int first = 0;
     int middle = 0;
@@ -249,9 +249,11 @@ int search(indT *indP, int id, bool ver, char *message) {
                 fclose(fp);
             }
 
-            printf("\n%6s|%-26s|%-8s|%-5s|%-10s|%-8s|%-s\n", "FilmID", "Subject", "Date", "State", "County", "Length", "Charge Code");
-            printf("------+--------------------------+--------+-----+----------+--------+---------\n");
-            printf("%6i|%-26s|%-2i/%-2i/%-2i|%-5s|%-10s|%-6f|%c\n\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);
+            printf("%6s|%-26s|%-10s|%-5s|%-10s|%-8s|%-s\n", "FilmID"
+                , "Subject", "Date", "State", "County", "Length", "Chg.Code");
+            printf("------+--------------------------+----------+-----+----------+--------+--------\n");
+            printf("%6i|%-26s|%2i/%2i/%4i|%-5s|%-10s|%-6f|%c\n", record.film_id, record.subject, record.date.month, record.date.day, record.date.year, record.state, record.county, record.length, record.charge_code);
+            printf("------+--------------------------+----------+-----+----------+--------+--------\n");
             system("PAUSE");
         }
     } else {
@@ -260,21 +262,35 @@ int search(indT *indP, int id, bool ver, char *message) {
     return spot;
 }
 void add(indT ind[]) {
-    //record *rp, int recordCount
+    bool validId = false;
     FILE * fp;
     if((fp = fopen("assignv2.rnd", "r+b")) == NULL) {
         printf("Couldn't open file.");
     } else {
         sRecord record;
-        record.film_id = get_film_id("Enter a number between 0 and 15000 (or a negative number to quit): ");
+        while(!validId) {
+            validId = true; //assume it's okay, but change later if test fail
+            record.film_id = get_film_id("Enter a number between 0 and 15000 (or a negative number to quit): ");
+            for(int x = 0; x < 50; x++) {
+                if(record.film_id == 99999) {
+                    printf("Film ID cannot be 99999 (5 9's).\n");
+                    x = 50;
+                    validId = false;
+                }
+                else if(record.film_id == ind[x].id) {
+                    printf("That Film ID already exists (%i).\n", record.film_id);
+                    x = 50;
+                    validId = false;
+                }
+            }
+        }
         get_subject(record.subject, "Please enter the subject: ");
         get_date(record.date, "Please enter the date in xx/xx/xxxx format: ");
         get_state(record.state, "Please enter the state in CAPITAL two letter abbreviation: ");
         get_county(record.county, "Please enter the county: ");
         get_length(record.length, "Please enter the length: ");
         get_charge_code(record.charge_code, "Please enter the charge code: ");
-        // The record is complete. Now add code to add it.
-        
+
         // Find first 99999 space in index
         int next;
         for(int x = 0; x < 50; x++) {
@@ -283,32 +299,23 @@ void add(indT ind[]) {
                 x = 50;
             }
         }
-        //printf("%i\n", x);
-        //system("PAUSE");
 
         ind[next].id = record.film_id;
         ind[next].pos = next;
 
         fseek(fp, 0, SEEK_END);
         fwrite(&record, sizeof(sRecord), 1, fp);
-
         fclose(fp);
     }
 }
 void deleteRec(indT ind[], char *message) {
     char trashCan[50] = {'\0'};
     int spot = search(ind, getInt("Please enter the film id that you would like to delete: "), false, message);
-    // If the record to delete is not found, message will be set to 
-    //  "RECORD NOT FOUND," and we won't have to worry bout it. But if it was
-    //  found, the next IF will change it to "Record Deleted!"
 
     if(spot >= 0) {
-        //printf("%i\n", spot);
         ind[spot].id = 99999;
-        //ind[spot].pos = 99999;
         strcpy(message, "Record Deleted!");
     }
-    /*system("PAUSE");*/
 }
 void sort(indT ind[]) {
     int x, y, temp;
@@ -581,7 +588,6 @@ void get_charge_code(char &dest, char *howToAsk) {
     }
     dest = toupper(buff[0]);
 }
-
 /*#####################################
 ##                                   ##
 ##       Supporting Functions        ##
@@ -611,8 +617,11 @@ bool is_double(char *num) {
     }
     return true;
 }
-
-//gettersville
+/*#####################################
+##                                   ##
+##           GettersVille            ##
+##                                   ##
+#####################################*/
 int getInt(char howToAsk[101]) {
     char buffer[40];
     printf("%s", howToAsk);
